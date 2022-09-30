@@ -2,8 +2,14 @@ import { status_code } from '../enums/status.js';
 import { connection } from '../pg/database.js';
 
 async function categoriesPost(req, res) {
+
+    const { name } = req.body;
+
     try {
-        
+        connection.query("INSERT INTO categories (name) VALUES ($1);", [name]);
+
+        res.send(status_code.created);
+        return;
     } catch (error) {
         res.status(status_code.server_error).send(error.message);
     }
@@ -21,4 +27,4 @@ async function categoriesGet(req, res) {
     }
 }
 
-export { categoriesGet };
+export { categoriesGet, categoriesPost };
