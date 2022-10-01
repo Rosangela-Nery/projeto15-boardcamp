@@ -6,19 +6,27 @@ async function categoriesPost(req, res) {
 
     const { name } = req.body;
 
-    const validation = categoriesSchema.validate(name , {
-        abortEarly: false,
-    });
-
-    if(validation.error) {
-        res.status(status_code.bad_request).send({"message": "É necessário preencher todos os campos!"});
-        return;
-    }
-
     try {
-        connection.query("INSERT INTO categories (name) VALUES ($1);", [name]);
 
-        res.send(status_code.created);
+        const validation = categoriesSchema.validate({name}, {
+            abortEarly: false,
+        });
+        console.log("Errrr: ", validation)
+        if(validation.error) {
+            res.status(status_code.bad_request).send({"message": "É necessário preencher todos os campos!"});
+            return;
+        }
+
+        const existName = await connection.query("SELECT * FROM categories WHERE name=($1);", [name]);
+
+        if((existName.rows).length) {
+            res.status(status_code.conflict).send({"message": "Esse nome já está cadastrado!"});
+            return;
+        }
+
+        await connection.query("INSERT INTO categories (name) VALUES ($1);", [name]);
+
+        res.sendStatus(status_code.created);
         return;
     } catch (error) {
         res.status(status_code.server_error).send(error.message);
