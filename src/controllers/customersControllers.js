@@ -66,17 +66,14 @@ async function customersPut(req, res) {
     const { id } = req.params;
 
     try {
+        const existCustomers = await connection.query("SELECT * FROM customers WHERE cpf=($1) AND id!=$2", [cpf, id]);
 
-        const existCpf = await connection.query("SELECT * FROM customers WHERE cpf=($1);", [cpf]);
-
-        const existId = await connection.query("SELECT * FROM customers WHERE id = ($1);", [id]);
-
-        if(!(existId.rows).length === (existCpf.rows).length) {
-            res.status(status_code.not_found).send({'message': 'Usuário não encontrado!'})
+        if(existCustomers.rows.length) { 
+            res.status(status_code.not_found).send({'message': 'Esse CPF já está cadastrado!'})
             return;
         }
 
-        await connection.query("INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4);", [name, phone, cpf, birthday]);
+        await connection.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = ${id};`, [name, phone, cpf, birthday]);
 
         res.sendStatus(status_code.ok);
         return;
