@@ -7,6 +7,14 @@ async function customersPost(req, res) {
     const { name, phone, cpf, birthday } = req.body;
 
     try {
+        const validation = customersSchema.validate({name, phone, cpf, birthday}, {
+            abortEarly: false,
+        });
+        console.log("Errrr: ", validation)
+        if(validation.error) {
+            res.status(status_code.bad_request).send({"message": "É necessário preencher todos os campos!"});
+            return;
+        }
 
         const existCpf = await connection.query("SELECT * FROM customers WHERE cpf=($1);", [cpf]);
 
@@ -29,7 +37,6 @@ async function customersGet(req, res) {
     try {
         const customers = await connection.query('SELECT * FROM customers;');
 
-        console.log(customers);
         res.send(customers.rows);
     } catch (error) {
         res.status(status_code.server_error).send(error.message);
@@ -38,13 +45,9 @@ async function customersGet(req, res) {
 
 async function customersGetId(req, res) {
     const { id } = req.params;
-    console.log("111111: ", id)
 
     try {
         const existId = await connection.query("SELECT * FROM customers WHERE id = ($1);", [id]);
-        console.log("22222: ", existId)
-
-        console.log("44444444: ", existId.rows)
 
         if(!(existId.rows).length) {
             res.status(status_code.not_found).send({'message': 'Usuário não encontrado!'})
@@ -53,7 +56,6 @@ async function customersGetId(req, res) {
 
         const customers = await connection.query('SELECT * FROM customers WHERE id = $1;', [id]);
 
-        console.log("333333: ", customers);
         res.send(customers.rows[0]);
     } catch (error) {
         res.status(status_code.server_error).send(error.message);
